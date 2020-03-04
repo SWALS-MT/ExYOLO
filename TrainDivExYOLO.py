@@ -1,5 +1,6 @@
 # base
 import sys
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from visdom import Visdom
@@ -53,8 +54,8 @@ train_acc_list = []
 val_loss_list = []
 val_acc_list = []
 # Datasetディレクトリ
-train_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
-val_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
+train_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
+val_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
 # transform
 transforms = T.Compose([M.Numpy2Tensor()])
 target_transforms = T.Compose([M.Numpy2Tensor()])
@@ -135,6 +136,7 @@ def eval(dataset_val):
 
 
 if __name__ == '__main__':
+    os.makedirs('./outputs/'+dt_str, exist_ok=True)
     train_dataset_length = int(len(dataset_full) * 0.8)
     val_dataset_length = int(len(dataset_full)) - train_dataset_length
     viz = Visdom()
@@ -158,7 +160,7 @@ if __name__ == '__main__':
         if epoch % 10 == 9:
             torch.save(model.state_dict(), './data/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
             # modelとグラフの保存
-            np.savez('./data/'+dt_str+'/train_loss_acc_backup_'+dt_str+'.npz', loss=np.array(train_loss_list),
+            np.savez('./outputs/'+dt_str+'/train_loss_acc_backup_'+dt_str+'.npz', loss=np.array(train_loss_list),
                      acc=np.array(train_acc_list))
-            np.savez('./data/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
+            np.savez('./outputs/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
                      acc=np.array(val_acc_list))
