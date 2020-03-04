@@ -60,8 +60,8 @@ class DivExYOLOVGG16(nn.Module):
 
     def loss_calculation(self, model_output, targets):
         out_size = model_output.size()
-        print('out_type', model_output.type(), 'out_size', out_size)
-        print('target_type', targets.type(), 'target_size', targets.size())
+        # print('out_type', model_output.type(), 'out_size', out_size)
+        # print('target_type', targets.type(), 'target_size', targets.size())
         targets_conf = targets[:, 0, :, :, :]
         # output bb tensor の準備
         model_output_bb_c = model_output[:, 0, :, :, :]

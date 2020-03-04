@@ -1,11 +1,10 @@
+# base
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import random
-import os
-import json
-import glob
+from visdom import Visdom
 
+# torch
 import torch
 import torch.optim as optim
 import torch.utils.data as data
@@ -30,7 +29,7 @@ print('PyTorch: ', torch.__version__)
 
 # __Initialize__
 # Hyper-parameters
-epochs = 5
+epochs = 10
 batch_size = 10
 learning_rate = 0.001
 # image settings
@@ -66,48 +65,100 @@ RGBD2DivRGBD = IP.RGBD2DivRGBD(img_size=img_size, div_num=output_size, depth_max
 dt_now = datetime.datetime.now()
 dt_str = dt_now.strftime('%Y-%m-%d')
 
+# Dataset object
+dataset_full = Loader.ExYOLOMakeDatasetObject(train_data_dir + '/color',
+                                              train_data_dir + '/depth',
+                                              train_data_dir + '/AABB_3D',
+                                              img_size=img_size,
+                                              output_size=output_size,
+                                              output_channels=output_channels)
 
-def train():
-    ##__Initialize__##
+
+def train(dataset_train):
+    # __Initialize__ #
     model.train()
-    runnning_loss = 0.0
-    iou_scores = 0
+    running_loss = 0.0
+    iou_scores = 0.0
     data_count = 0
 
-    dataset_train = Loader.ExYOLOMakeDatasetObject(train_data_dir+'/color',
-                                                   train_data_dir+'/depth',
-                                                   train_data_dir+'/AABB_3D',
-                                                   img_size=img_size,
-                                                   output_size=output_size,
-                                                   output_channels=output_channels)
     dataloader_train = data.DataLoader(dataset=dataset_train, batch_size=batch_size, shuffle=True)
-
     for step, (rgbds, targets) in enumerate(dataloader_train, 1):
         optimizer.zero_grad()
 
         rgbds = rgbds.to(device)
         targets = targets.to(device)
         rgbds = RGBD2DivRGBD(rgbds)
-        print(rgbds.size())
         outputs, loss = model(rgbds, targets)
         loss.backward()
         optimizer.step()
-        runnning_loss += loss.item()
+        running_loss += loss.item()
         targets = targets.detach()
         outputs = outputs.detach()
 
         iou_scores += ac.calculate_accuracy(outputs, targets)
         data_count = step
         if step % 100 == 0:
-            print('Step: ' + str(step + 1), 'Loss: ' + str(runnning_loss / float(step + 1)))
+            print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
 
-    train_loss = runnning_loss / data_count
+    train_loss = running_loss / data_count
     train_acc = iou_scores / data_count
 
     return train_loss, train_acc
 
 
+def eval(dataset_val):
+    # __Initialize__ #
+    model.eval()
+    running_loss = 0.0
+    iou_scores = 0.0
+    data_count = 0
+    with torch.no_grad():
+        dataloader_val = data.DataLoader(dataset=dataset_val, batch_size=batch_size, shuffle=True)
+        for step, (rgbds, targets) in enumerate(dataloader_val, 1):
+            rgbds = rgbds.to(device)
+            targets = targets.to(device)
+            rgbds = RGBD2DivRGBD(rgbds)
+            outputs, loss = model(rgbds, targets)
+            running_loss += loss.item()
+            targets = targets.detach()
+            outputs = outputs.detach()
+
+            iou_scores += ac.calculate_accuracy(outputs, targets)
+            data_count = step
+            if step % 100 == 0:
+                print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
+
+        val_loss = running_loss / data_count
+        val_acc = iou_scores / data_count
+
+        return val_loss, val_acc
+
+
 if __name__ == '__main__':
+    train_dataset_length = int(len(dataset_full) * 0.8)
+    val_dataset_length = int(len(dataset_full)) - train_dataset_length
+    viz = Visdom()
     for epoch in range(epochs):
-        train_loss, train_acc = train()
+        train_dataset, val_dataset \
+            = torch.utils.data.dataset.random_split(dataset_full, [train_dataset_length, val_dataset_length])
+        train_loss, train_acc = train(train_dataset)
+        val_loss, val_acc = eval(val_dataset)
+
+        # display
         print('epoch %d, train_loss: %.4f train_acc:%.4f' % (epoch + 1, train_loss, train_acc))
+        viz.line(X=np.array([epoch]), Y=np.array([train_loss]), win='loss', name='avg_train_loss', update='append')
+        viz.line(X=np.array([epoch]), Y=np.array([train_acc]), win='acc', name='avg_train_acc', update='append')
+        viz.line(X=np.array([epoch]), Y=np.array([val_loss]), win='loss', name='avg_val_loss', update='append')
+        viz.line(X=np.array([epoch]), Y=np.array([val_acc]), win='acc', name='avg_val_acc', update='append')
+        # modelとグラフの保存
+        train_loss_list.append(train_loss)
+        train_acc_list.append(train_acc)
+        val_loss_list.append(val_loss)
+        val_acc_list.append(val_acc)
+        if epoch % 10 == 9:
+            torch.save(model.state_dict(), './data/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
+            # modelとグラフの保存
+            np.savez('./data/'+dt_str+'/train_loss_acc_backup_'+dt_str+'.npz', loss=np.array(train_loss_list),
+                     acc=np.array(train_acc_list))
+            np.savez('./data/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
+                     acc=np.array(val_acc_list))

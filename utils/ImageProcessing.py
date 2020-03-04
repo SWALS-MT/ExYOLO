@@ -29,6 +29,7 @@ class RGBD2DivRGBD():
         color_t = torch.flatten(color_t, start_dim=3, end_dim=4)
         color_t = torch.transpose(color_t, dim0=1, dim1=3)
         color_t = torch.transpose(color_t, dim0=2, dim1=3)
+        color_t /= 255.0
 
         return color_t
 
