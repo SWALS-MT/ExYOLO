@@ -79,6 +79,7 @@ def calculate_accuracy(output_tensor, target_tensor):
         out_v = ((out.size()[3])**3) * out_w * out_h * out_d
         tar_v = ((target.size()[3])**3) * tar_w * tar_h * tar_d
         iou = iou_v / (out_v + tar_v - iou_v)
+        iou = iou.to("cpu").item()
         ious.append(iou)
     iou_mean = sum(ious) / len(ious)
 
