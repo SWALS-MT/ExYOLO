@@ -30,9 +30,9 @@ print('PyTorch: ', torch.__version__)
 
 # __Initialize__
 # Hyper-parameters
-epochs = 10
-batch_size = 10
-learning_rate = 0.001
+epochs = 1000
+batch_size = 25
+learning_rate = 0.01
 # image settings
 img_size = 224
 output_size = 14
@@ -164,3 +164,7 @@ if __name__ == '__main__':
                      acc=np.array(train_acc_list))
             np.savez('./outputs/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
                      acc=np.array(val_acc_list))
+        if 75 <= epoch < 105:
+            learning_rate = 0.001
+        elif 105 <= epoch:
+            learning_rate = 0.0001
