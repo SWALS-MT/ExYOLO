@@ -30,7 +30,7 @@ print('PyTorch: ', torch.__version__)
 
 # __Initialize__
 # Hyper-parameters
-epochs = 1000
+epochs = 135
 batch_size = 25
 learning_rate = 0.01
 # image settings
@@ -158,8 +158,8 @@ if __name__ == '__main__':
         val_loss_list.append(val_loss)
         val_acc_list.append(val_acc)
         if epoch % 10 == 9:
-            torch.save(model.state_dict(), './data/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
             # modelとグラフの保存
+            torch.save(model.state_dict(), './data/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
             np.savez('./outputs/'+dt_str+'/train_loss_acc_backup_'+dt_str+'.npz', loss=np.array(train_loss_list),
                      acc=np.array(train_acc_list))
             np.savez('./outputs/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
@@ -168,3 +168,10 @@ if __name__ == '__main__':
             learning_rate = 0.001
         elif 105 <= epoch:
             learning_rate = 0.0001
+
+    # 最終結果の保存
+    torch.save(model.state_dict(), './data/' + dt_str + '/DivExYOLO_' + dt_str + '_Epoch135' + '.pth')
+    np.savez('./outputs/' + dt_str + '/train_loss_acc_backup_' + dt_str + '.npz', loss=np.array(train_loss_list),
+             acc=np.array(train_acc_list))
+    np.savez('./outputs/' + dt_str + '/val_loss_acc_backup_' + dt_str + '.npz', loss=np.array(val_loss_list),
+             acc=np.array(val_acc_list))
