@@ -148,6 +148,7 @@ if __name__ == '__main__':
 
         # display
         print('epoch %d, train_loss: %.4f train_acc:%.4f' % (epoch + 1, train_loss, train_acc))
+        print('epoch %d, val_loss: %.4f val_acc:%.4f' % (epoch + 1, val_loss, val_acc))
         viz.line(X=np.array([epoch]), Y=np.array([train_loss]), win='loss', name='avg_train_loss', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([train_acc]), win='acc', name='avg_train_acc', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([val_loss]), win='loss', name='avg_val_loss', update='append')
