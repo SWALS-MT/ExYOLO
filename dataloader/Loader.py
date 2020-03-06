@@ -34,6 +34,7 @@ class ExYOLOMakeDatasetObject(torch.utils.data.Dataset):
         self.color_list = list(p_color.glob('./*.png'))
         self.depth_list = list(p_depth.glob('./*.png'))
         self.target_list = list(p_target.glob('./*.txt'))
+        print(color_dir)
         if len(self.color_list) == 0:
             print('ERROR: There is no file in the color directory.', file=sys.stderr)
             sys.exit(1)

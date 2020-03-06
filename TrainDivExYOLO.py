@@ -4,6 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from visdom import Visdom
+from tqdm import tqdm
 
 # torch
 import torch
@@ -82,8 +83,10 @@ def train(dataset_train):
     iou_scores = 0.0
     data_count = 0
 
+    t1 = time.time()
     dataloader_train = data.DataLoader(dataset=dataset_train, batch_size=batch_size, shuffle=True)
-    for step, (rgbds, targets) in enumerate(dataloader_train, 1):
+    t2 = time.time()
+    for step, (rgbds, targets) in enumerate(tqdm(dataloader_train, leave=False), 1):
         optimizer.zero_grad()
 
         rgbds = rgbds.to(device)
@@ -98,15 +101,6 @@ def train(dataset_train):
 
         iou_scores += ac.calculate_accuracy(outputs, targets)
         data_count = step
-        if step % 100 == 0:
-            print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
-            print('loss_c:', model.yolo_loss.loss_c.item(),
-                  'loss_x:', model.yolo_loss.loss_x.item(),
-                  'loss_y:', model.yolo_loss.loss_y.item(),
-                  'loss_z:', model.yolo_loss.loss_z.item(),
-                  'loss_w:', model.yolo_loss.loss_w.item(),
-                  'loss_h:', model.yolo_loss.loss_h.item(),
-                  'loss_d:', model.yolo_loss.loss_d.item())
 
     train_loss = running_loss / data_count
     train_acc = iou_scores / data_count
@@ -122,7 +116,7 @@ def eval(dataset_val):
     data_count = 0
     with torch.no_grad():
         dataloader_val = data.DataLoader(dataset=dataset_val, batch_size=batch_size, shuffle=True)
-        for step, (rgbds, targets) in enumerate(dataloader_val, 1):
+        for step, (rgbds, targets) in enumerate(tqdm(dataloader_val, leave=False), 1):
             rgbds = rgbds.to(device)
             targets = targets.to(device)
             rgbds = RGBD2DivRGBD(rgbds)
@@ -133,15 +127,6 @@ def eval(dataset_val):
 
             iou_scores += ac.calculate_accuracy(outputs, targets)
             data_count = step
-            if step % 100 == 0:
-                print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
-                print('loss_c:', model.yolo_loss.loss_c.item(),
-                      'loss_x:', model.yolo_loss.loss_x.item(),
-                      'loss_y:', model.yolo_loss.loss_y.item(),
-                      'loss_z:', model.yolo_loss.loss_z.item(),
-                      'loss_w:', model.yolo_loss.loss_w.item(),
-                      'loss_h:', model.yolo_loss.loss_h.item(),
-                      'loss_d:', model.yolo_loss.loss_d.item())
 
         val_loss = running_loss / data_count
         val_acc = iou_scores / data_count
@@ -158,11 +143,27 @@ if __name__ == '__main__':
         train_dataset, val_dataset \
             = torch.utils.data.dataset.random_split(dataset_full, [train_dataset_length, val_dataset_length])
         train_loss, train_acc = train(train_dataset)
+        print('epoch %d, train_loss: %.4f train_acc:%.4f' % (epoch + 1, train_loss, train_acc))
+        print('loss_c:', model.yolo_loss.loss_c.item())
+        print('loss_x:', model.yolo_loss.loss_x.item())
+        print('loss_y:', model.yolo_loss.loss_y.item())
+        print('loss_z:', model.yolo_loss.loss_z.item())
+        print('loss_w:', model.yolo_loss.loss_w.item())
+        print('loss_h:', model.yolo_loss.loss_h.item())
+        print('loss_d:', model.yolo_loss.loss_d.item())
+
         val_loss, val_acc = eval(val_dataset)
+        print('epoch %d, val_loss: %.4f val_acc:%.4f' % (epoch + 1, val_loss, val_acc))
+        print('loss_c:', model.yolo_loss.loss_c.item())
+        print('loss_x:', model.yolo_loss.loss_x.item())
+        print('loss_y:', model.yolo_loss.loss_y.item())
+        print('loss_z:', model.yolo_loss.loss_z.item())
+        print('loss_w:', model.yolo_loss.loss_w.item())
+        print('loss_h:', model.yolo_loss.loss_h.item())
+        print('loss_d:', model.yolo_loss.loss_d.item())
 
         # display
-        print('epoch %d, train_loss: %.4f train_acc:%.4f' % (epoch + 1, train_loss, train_acc))
-        print('epoch %d, val_loss: %.4f val_acc:%.4f' % (epoch + 1, val_loss, val_acc))
+
         viz.line(X=np.array([epoch]), Y=np.array([train_loss]), win='loss', name='avg_train_loss', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([train_acc]), win='acc', name='avg_train_acc', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([val_loss]), win='loss', name='avg_val_loss', update='append')
