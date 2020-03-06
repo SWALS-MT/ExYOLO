@@ -31,7 +31,7 @@ print('PyTorch: ', torch.__version__)
 # __Initialize__
 # Hyper-parameters
 epochs = 135
-batch_size = 25
+batch_size = 10
 learning_rate = 0.01
 # image settings
 img_size = 224
@@ -54,8 +54,8 @@ train_acc_list = []
 val_loss_list = []
 val_acc_list = []
 # Datasetディレクトリ
-train_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
-val_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
+train_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
+val_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
 # transform
 transforms = T.Compose([M.Numpy2Tensor()])
 target_transforms = T.Compose([M.Numpy2Tensor()])
@@ -100,6 +100,13 @@ def train(dataset_train):
         data_count = step
         if step % 100 == 0:
             print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
+            print('loss_c:', model.yolo_loss.loss_c.item(),
+                  'loss_x:', model.yolo_loss.loss_x.item(),
+                  'loss_y:', model.yolo_loss.loss_y.item(),
+                  'loss_z:', model.yolo_loss.loss_z.item(),
+                  'loss_w:', model.yolo_loss.loss_w.item(),
+                  'loss_h:', model.yolo_loss.loss_h.item(),
+                  'loss_d:', model.yolo_loss.loss_d.item())
 
     train_loss = running_loss / data_count
     train_acc = iou_scores / data_count
@@ -128,6 +135,13 @@ def eval(dataset_val):
             data_count = step
             if step % 100 == 0:
                 print('Step: ' + str(step), 'Loss: ' + str(running_loss / float(step)))
+                print('loss_c:', model.yolo_loss.loss_c.item(),
+                      'loss_x:', model.yolo_loss.loss_x.item(),
+                      'loss_y:', model.yolo_loss.loss_y.item(),
+                      'loss_z:', model.yolo_loss.loss_z.item(),
+                      'loss_w:', model.yolo_loss.loss_w.item(),
+                      'loss_h:', model.yolo_loss.loss_h.item(),
+                      'loss_d:', model.yolo_loss.loss_d.item())
 
         val_loss = running_loss / data_count
         val_acc = iou_scores / data_count

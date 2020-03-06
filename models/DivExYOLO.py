@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 # original
 from models.Backbones import Darknet53, Upsample, DivVGG16
+from utils.LossFunctions import YoloBBLoss
 
 
 class HeadNetDivVGG16(nn.Module):
@@ -53,75 +54,15 @@ class DivExYOLOVGG16(nn.Module):
         self.HeadNet = HeadNetDivVGG16()
 
         self.conf_thresh = 0.5
-        self.mse_loss = nn.MSELoss()
-        self.bce_loss = nn.BCELoss()
         self.obj_scale = 10
         self.noobj_scale = 1
 
-    def loss_calculation(self, model_output, targets):
-        out_size = model_output.size()
-        # print('out_type', model_output.type(), 'out_size', out_size)
-        # print('target_type', targets.type(), 'target_size', targets.size())
-        targets_conf = targets[:, 0, :, :, :]
-        # output bb tensor の準備
-        model_output_bb_c = model_output[:, 0, :, :, :]
-        model_output_bb_x = model_output[:, 1, :, :, :]
-        model_output_bb_y = model_output[:, 2, :, :, :]
-        model_output_bb_z = model_output[:, 3, :, :, :]
-        model_output_bb_w = model_output[:, 4, :, :, :]
-        model_output_bb_h = model_output[:, 5, :, :, :]
-        model_output_bb_d = model_output[:, 6, :, :, :]
-        model_output_bb_c_obj = model_output_bb_c[targets_conf == 1]
-        model_output_bb_c_noobj = model_output_bb_c[targets_conf < 1]
-        model_output_bb_x = model_output_bb_x[targets_conf == 1]
-        model_output_bb_y = model_output_bb_y[targets_conf == 1]
-        model_output_bb_z = model_output_bb_z[targets_conf == 1]
-        model_output_bb_w = model_output_bb_w[targets_conf == 1]
-        model_output_bb_h = model_output_bb_h[targets_conf == 1]
-        model_output_bb_d = model_output_bb_d[targets_conf == 1]
-        # target bb tensor
-        targets_x = targets[:, 1, :, :, :]
-        targets_y = targets[:, 2, :, :, :]
-        targets_z = targets[:, 3, :, :, :]
-        targets_w = targets[:, 4, :, :, :]
-        targets_h = targets[:, 5, :, :, :]
-        targets_d = targets[:, 6, :, :, :]
-        targets_c_obj = targets_conf[targets_conf == 1]
-        targets_c_noobj = targets_conf[targets_conf < 1]
-        targets_x = targets_x[targets_conf == 1]
-        targets_y = targets_y[targets_conf == 1]
-        targets_z = targets_z[targets_conf == 1]
-        targets_w = targets_w[targets_conf == 1]
-        targets_h = targets_h[targets_conf == 1]
-        targets_d = targets_d[targets_conf == 1]
-
-        # object loss
-        loss_bb = self.bce_loss(model_output_bb_c_obj, targets_c_obj)   # confident
-        loss_bb += self.mse_loss(model_output_bb_x, targets_x)          # Bounding Box
-        loss_bb += self.mse_loss(model_output_bb_y, targets_y)
-        loss_bb += self.mse_loss(model_output_bb_z, targets_z)
-        loss_bb += self.mse_loss(model_output_bb_w, targets_w)
-        loss_bb += self.mse_loss(model_output_bb_h, targets_h)
-        loss_bb += self.mse_loss(model_output_bb_d, targets_d)
-        for i in range(7, out_size[1]):
-            model_output_class = model_output[:, i, :, :, :]
-            model_output_class = model_output_class[targets_conf == 1]
-            targets_class = targets[:, i, :, :, :]
-            targets_class = targets_class[targets_conf == 1]
-            loss_bb += self.bce_loss(model_output_class, targets_class)
-        loss_bb = loss_bb * self.obj_scale
-
-        # no object loss
-        loss_nobb = self.noobj_scale * self.bce_loss(model_output_bb_c_noobj, targets_c_noobj)
-        # print('loss_nobb', loss_nobb.item())
-        loss = loss_bb + loss_nobb
-
-        return loss
+        self.yolo_loss = YoloBBLoss(self.obj_scale, self.noobj_scale)
 
     def forward(self, x, targets):
         model_output = self.HeadNet(x)
         if targets is not None:
-            loss = self.loss_calculation(model_output, targets)
+            loss = self.yolo_loss(model_output, targets)
             return model_output, loss
         else:
             return model_output
