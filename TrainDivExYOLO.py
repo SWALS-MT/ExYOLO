@@ -183,8 +183,14 @@ if __name__ == '__main__':
                      acc=np.array(val_acc_list))
         if 75 <= epoch < 105:
             learning_rate = 0.001
+            # Optimizer
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
         elif 105 <= epoch:
             learning_rate = 0.0001
+            # Optimizer
+            optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
     # 最終結果の保存
     torch.save(model.state_dict(), './data/' + dt_str + '/DivExYOLO_' + dt_str + '_Epoch135' + '.pth')
