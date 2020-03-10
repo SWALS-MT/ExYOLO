@@ -83,18 +83,19 @@ def train(dataset_train):
     iou_scores = 0.0
     data_count = 0
 
-    t1 = time.time()
     dataloader_train = data.DataLoader(dataset=dataset_train, batch_size=batch_size, shuffle=True)
-    t2 = time.time()
     for step, (rgbds, targets) in enumerate(tqdm(dataloader_train, leave=False), 1):
         optimizer.zero_grad()
 
         rgbds = rgbds.to(device)
         targets = targets.to(device)
         rgbds = RGBD2DivRGBD(rgbds)
+
         outputs, loss = model(rgbds, targets)
+
         loss.backward()
         optimizer.step()
+
         running_loss += loss.item()
         targets = targets.detach()
         outputs = outputs.detach()

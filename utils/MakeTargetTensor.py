@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import torch
+import torch.nn.functional as F
 import math
 import scipy.signal
 
@@ -9,7 +10,7 @@ class LoadBBTensor():
     def __init__(self, tensor_size, channels):
         # gaussian sphere
         gaussian_sphere_base = np.zeros([100, 100, 100])
-        ar_x = scipy.signal.gaussian(100, std=15).astype(np.float32)
+        ar_x = scipy.signal.gaussian(100, std=20).astype(np.float32)
         for k in range(0, 100):
             for j in range(0, 100):
                 for i in range(0, 100):
@@ -21,7 +22,8 @@ class LoadBBTensor():
                     else:
                         dist -= 1
                         gaussian_sphere_base[i, j, k] = ar_x[50:100][dist]
-        self.GaussianSphere = gaussian_sphere_base
+        self.GaussianSphere = torch.from_numpy(gaussian_sphere_base).detach()
+        # self.GaussianSphere = gaussian_sphere_base
         self.tensor_size = tensor_size
         self.channels = channels
 
@@ -107,9 +109,9 @@ class LoadBBTensor():
 
             # confident
             bb_conf \
-                = self._make_bb_conf_array(x_grid_stop - x_grid_start + 1,
-                                           y_grid_stop - y_grid_start + 1,
-                                           z_grid_stop - z_grid_start + 1)
+                = self._make_bb_conf_array_torch(x_grid_stop - x_grid_start + 1,
+                                                 y_grid_stop - y_grid_start + 1,
+                                                 z_grid_stop - z_grid_start + 1)
             conf = target_tensor_np[0, :, :, :]
             target_tensor_np[0, z_grid_start:z_grid_stop + 1, y_grid_start:y_grid_stop + 1, x_grid_start:x_grid_stop + 1] \
                 = np.where(bb_conf > conf[z_grid_start:z_grid_stop + 1, y_grid_start:y_grid_stop + 1, x_grid_start:x_grid_stop + 1],
@@ -145,6 +147,11 @@ class LoadBBTensor():
             target[c, :, :] = img
 
         return target
+
+    def _make_bb_conf_array_torch(self, bb_width, bb_height, bb_depth):
+        gaussian_sphere_t = self.GaussianSphere.clone()
+        gaussian_sphere_t = F.adaptive_avg_pool3d(gaussian_sphere_t[None, :, :, :], (bb_depth, bb_height, bb_width))
+        return gaussian_sphere_t[0].numpy()
 
 
 class Numpy2Tensor():
