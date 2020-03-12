@@ -55,8 +55,8 @@ train_acc_list = []
 val_loss_list = []
 val_acc_list = []
 # Datasetディレクトリ
-train_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
-val_data_dir = '/mnt/GPUServerWrokspace/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
+train_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35'
+val_data_dir = '/mnt/HDD1/mtakahashi/dataset/new_mydata/2019-10-14-18-56-35/val'
 # transform
 transforms = T.Compose([M.Numpy2Tensor()])
 target_transforms = T.Compose([M.Numpy2Tensor()])
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         val_acc_list.append(val_acc)
         if epoch % 10 == 9:
             # modelとグラフの保存
-            torch.save(model.state_dict(), './data/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
+            torch.save(model.state_dict(), './outputs/'+dt_str+'/DivExYOLO_'+dt_str+'_Epoch'+str(epoch+1)+'.pth')
             np.savez('./outputs/'+dt_str+'/train_loss_acc_backup_'+dt_str+'.npz', loss=np.array(train_loss_list),
                      acc=np.array(train_acc_list))
             np.savez('./outputs/'+dt_str+'/val_loss_acc_backup_'+dt_str+'.npz', loss=np.array(val_loss_list),
