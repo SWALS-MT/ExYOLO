@@ -193,7 +193,7 @@ if __name__ == '__main__':
             scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
 
     # 最終結果の保存
-    torch.save(model.state_dict(), './data/' + dt_str + '/DivExYOLO_' + dt_str + '_Epoch135' + '.pth')
+    torch.save(model.state_dict(), './outputs/' + dt_str + '/DivExYOLO_' + dt_str + '_Epoch135' + '.pth')
     np.savez('./outputs/' + dt_str + '/train_loss_acc_backup_' + dt_str + '.npz', loss=np.array(train_loss_list),
              acc=np.array(train_acc_list))
     np.savez('./outputs/' + dt_str + '/val_loss_acc_backup_' + dt_str + '.npz', loss=np.array(val_loss_list),
