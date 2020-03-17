@@ -1,8 +1,14 @@
+# RealSense
 import pyrealsense2 as rs
-
 import numpy as np
-
 import cv2
+
+# pytorch
+import torch
+
+# my model
+from models.DivExYOLO import DivExYOLOVGG16
+from dataloader.Loader import LoadDivRGBDFromCamera
 
 # Create a pipeline
 pipeline = rs.pipeline()
@@ -32,6 +38,12 @@ clipping_distance = clipping_distance_in_meters / depth_scale
 align_to = rs.stream.color
 align = rs.align(align_to)
 
+# DivExYOLO settings
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = DivExYOLOVGG16()
+model = model.to(device)
+load_divrgbd_from_camera = LoadDivRGBDFromCamera(img_size=224, div_num=14, depth_max=10000, device=device)
+model.eval()
 # Streaming loop
 try:
     while True:
@@ -50,8 +62,12 @@ try:
         if not aligned_depth_frame or not color_frame:
             continue
 
+        # transform images to the style of model input
         depth_image = np.asanyarray(aligned_depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
+        rgbd = load_divrgbd_from_camera(color_image, depth_image)
+        rgbd = rgbd.to(device)
+        output = model(rgbd)
 
         # Render images
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)

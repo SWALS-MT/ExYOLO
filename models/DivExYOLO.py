@@ -59,7 +59,7 @@ class DivExYOLOVGG16(nn.Module):
 
         self.yolo_loss = YoloBBLoss(self.obj_scale, self.noobj_scale)
 
-    def forward(self, x, targets):
+    def forward(self, x, targets=None):
         model_output = self.HeadNet(x)
         if targets is not None:
             loss = self.yolo_loss(model_output, targets)

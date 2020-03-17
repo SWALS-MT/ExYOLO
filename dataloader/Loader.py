@@ -10,6 +10,7 @@ import torch
 import torch.utils.data
 # mine
 from utils import MakeTargetTensor as M
+from utils import ImageProcessing as IP
 
 
 class ExYOLOMakeDatasetObject(torch.utils.data.Dataset):
@@ -73,4 +74,22 @@ class ExYOLOMakeDatasetObject(torch.utils.data.Dataset):
         depth = cv2.resize(depth, (img_size, img_size), cv2.INTER_NEAREST)
         depth = depth[:, :, np.newaxis].astype(np.float32)
         rgbd = np.append(color, depth, axis=2)
+        return rgbd
+
+
+class LoadDivRGBDFromCamera():
+    def __init__(self, img_size, div_num, depth_max, device):
+        self.img_size = img_size
+        self.rgbd_to_divrgbd = IP.RGBD2DivRGBD(img_size, div_num, depth_max, device)
+        self.numpy_to_tensor = M.Numpy2Tensor()
+
+    def __call__(self, color, depth):
+        color = cv2.resize(color, (self.img_size, self.img_size)).astype(np.float32)
+        depth = cv2.resize(depth, (self.img_size, self.img_size), cv2.INTER_NEAREST)
+        depth = depth[:, :, np.newaxis].astype(np.float32)
+        rgbd = np.append(color, depth, axis=2)[None, :, :, :]
+
+        rgbd = self.numpy_to_tensor(rgbd)
+        rgbd = self.rgbd_to_divrgbd(rgbd)
+
         return rgbd
