@@ -164,7 +164,6 @@ if __name__ == '__main__':
         print('loss_d:', model.yolo_loss.loss_d.item())
 
         # display
-
         viz.line(X=np.array([epoch]), Y=np.array([train_loss]), win='loss', name='avg_train_loss', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([train_acc]), win='acc', name='avg_train_acc', update='append')
         viz.line(X=np.array([epoch]), Y=np.array([val_loss]), win='loss', name='avg_val_loss', update='append')
