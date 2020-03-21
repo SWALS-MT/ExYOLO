@@ -44,7 +44,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = DivExYOLOVGG16()
 model = model.to(device)
 MODEL_PATH = \
-    '/mnt/sdb1/Workspace_MTakahashi/programs/Python/ExYOLO/outputs/2020-03-12/DivExYOLO_2020-03-12_Epoch130.pth'
+    '../outputs/2020-03-12/DivExYOLO_2020-03-12_Epoch130.pth'
 model.load_state_dict(torch.load(MODEL_PATH))
 load_divrgbd_from_camera = LoadDivRGBDFromCamera(img_size=224,
                                                  div_num=14,
@@ -56,6 +56,10 @@ yolo_output_to_bb = TO.YOLOOutput2BB(grid_scale=14,
                                      z_scale=10,
                                      conf_thresh=0.5,
                                      device=device)
+save_data = TO.SaveData(color_save_flag=True,
+                        depth_save_flag=True,
+                        txt_save_flag=True,
+                        save_dir='./outputs')
 model.eval()
 # Streaming loop
 try:
@@ -82,8 +86,10 @@ try:
         with torch.no_grad():
             rgbd = rgbd.to(device)
             output = model(rgbd)
-            output = torch.cat((output, output), dim=0)
-        output = yolo_output_to_bb(output)
+        # Transform output
+        bb = yolo_output_to_bb(output)
+        # save data
+        save_data(save_name='out', color=color_image, depth=depth_image, bb=bb)
 
         # Render images
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
