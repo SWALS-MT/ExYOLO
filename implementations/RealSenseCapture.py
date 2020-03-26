@@ -59,7 +59,14 @@ yolo_output_to_bb = TO.YOLOOutput2BB(grid_scale=14,
 save_data = TO.SaveData(color_save_flag=True,
                         depth_save_flag=True,
                         txt_save_flag=True,
-                        save_dir='./outputs')
+                        save_dir='/mnt/HDD1/mtakahashi/process_space')
+
+# # intrinsics
+# frames = pipeline.wait_for_frames()
+# color_ = frames.get_color_frame()
+# intrinsics = color_.profile.as_video_stream_profile().intrinsics
+
+
 model.eval()
 # Streaming loop
 try:
@@ -88,8 +95,6 @@ try:
             output = model(rgbd)
         # Transform output
         bb = yolo_output_to_bb(output)
-        # save data
-        save_data(save_name='out', color=color_image, depth=depth_image, bb=bb)
 
         # Render images
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
@@ -100,5 +105,7 @@ try:
         if key & 0xFF == ord('q') or key == 27:
             cv2.destroyAllWindows()
             break
+        elif key & 0xFF == ord('s'):
+            save_data(save_name='out', color=color_image, depth=depth_image, bb=bb)
 finally:
     pipeline.stop()

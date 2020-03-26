@@ -5,6 +5,7 @@ import os
 import numpy as np
 import cv2
 
+
 class YOLOOutput2BB():
     """
     grid_scale: The grid size of the model output.
@@ -30,9 +31,9 @@ class YOLOOutput2BB():
         onehot[conf_tensor[:, 0], conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] = 1
 
         # xyz to grid scale
-        model_output[conf_tensor[:, 0], 1, conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] += conf_tensor[:, 3]
+        model_output[conf_tensor[:, 0], 1, conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] += conf_tensor[:, 1]
         model_output[conf_tensor[:, 0], 2, conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] += conf_tensor[:, 2]
-        model_output[conf_tensor[:, 0], 3, conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] += conf_tensor[:, 1]
+        model_output[conf_tensor[:, 0], 3, conf_tensor[:, 1], conf_tensor[:, 2], conf_tensor[:, 3]] += conf_tensor[:, 3]
         # xyz whd
         x = (model_output[:, 1]) * onehot
         x = ((x[x > 0] / self.grid_scale) * self.x_scale) - self.st_center_x
